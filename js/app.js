@@ -1,45 +1,29 @@
 // js/app.js
-// Main Application Controller for Carter PCs Runner
+// Simplified Cartoon App Controller
 
 import { CarterRunner } from './game.js';
-import { COMPUTER_PARTS } from './parts.js';
+import { audio } from './audio.js';
 
 window.addEventListener('DOMContentLoaded', () => {
-  // DOM Elements
   const canvas = document.getElementById('game-canvas');
-  const fpsDisplay = document.getElementById('fps-display');
   const scoreDisplay = document.getElementById('score-display');
   const highscoreDisplay = document.getElementById('highscore-display');
-  const btnParts = document.getElementById('btn-parts');
-  const btnCloseParts = document.getElementById('btn-close-parts');
-  const btnViewParts = document.getElementById('btn-view-parts');
-  const partsDrawer = document.getElementById('parts-drawer');
-  const partsList = document.getElementById('parts-list');
+  const btnSound = document.getElementById('btn-sound');
 
-  // Cooldown Elements
-  const cooldownPill = document.getElementById('cooldown-pill');
-  const cooldownRingFill = document.getElementById('cooldown-ring-fill');
-  const cooldownText = document.getElementById('cooldown-text');
-  const btnJump = document.getElementById('btn-jump');
-  const jumpBtnLabel = document.getElementById('jump-btn-label');
-
-  // Overlays
+  // Modals
   const startOverlay = document.getElementById('start-overlay');
   const gameoverOverlay = document.getElementById('gameover-overlay');
   const btnStart = document.getElementById('btn-start');
   const btnRestart = document.getElementById('btn-restart');
-  const gameoverQuote = document.getElementById('gameover-quote');
   const finalScoreEl = document.getElementById('final-score');
-  const dodgedCountEl = document.getElementById('dodged-count');
-  const pasteCountEl = document.getElementById('paste-count');
   const bestScoreEl = document.getElementById('best-score');
 
-  // Control buttons
+  // Controls
   const btnLeft = document.getElementById('btn-left');
   const btnRight = document.getElementById('btn-right');
-
-  // Populate Parts Manual
-  populatePartsManual();
+  const btnJump = document.getElementById('btn-jump');
+  const cooldownFill = document.getElementById('cooldown-fill');
+  const jumpTitle = btnJump.querySelector('.jump-title');
 
   // Initialize Game Instance
   const runner = new CarterRunner(canvas, {
@@ -49,53 +33,35 @@ window.addEventListener('DOMContentLoaded', () => {
         gameoverOverlay.classList.add('hidden');
       }
     },
-    onScoreUpdate: (score, highScore, fps) => {
+    onScoreUpdate: (score, highScore) => {
       scoreDisplay.textContent = score.toLocaleString();
       highscoreDisplay.textContent = highScore.toLocaleString();
-      fpsDisplay.textContent = fps;
     },
     onCooldownUpdate: (progress, remaining) => {
       if (remaining <= 0) {
-        cooldownPill.classList.remove('recharging');
-        cooldownPill.classList.add('ready');
-        cooldownText.textContent = 'JUMP READY';
-        cooldownRingFill.style.transform = 'scale(1)';
         btnJump.classList.remove('on-cooldown');
-        jumpBtnLabel.textContent = 'JUMP ⇪';
+        jumpTitle.textContent = 'JUMP! 🚀';
+        cooldownFill.style.width = '100%';
       } else {
-        cooldownPill.classList.add('recharging');
-        cooldownPill.classList.remove('ready');
-        cooldownText.textContent = `RECHARGE ${remaining.toFixed(1)}s`;
-        cooldownRingFill.style.transform = `scale(${Math.max(0.2, progress)})`;
         btnJump.classList.add('on-cooldown');
-        jumpBtnLabel.textContent = `${remaining.toFixed(1)}s`;
+        jumpTitle.textContent = `${remaining.toFixed(1)}s`;
+        cooldownFill.style.width = `${Math.min(100, Math.max(0, progress * 100))}%`;
       }
     },
-    onCooldownReady: () => {
-      cooldownPill.style.transform = 'scale(1.1)';
-      setTimeout(() => {
-        cooldownPill.style.transform = '';
-      }, 150);
-    },
     onGameOver: (stats) => {
-      gameoverQuote.textContent = `"${stats.quote}"`;
       finalScoreEl.textContent = stats.score.toLocaleString();
-      dodgedCountEl.textContent = stats.partsDodged;
-      pasteCountEl.textContent = stats.pasteCollected;
       bestScoreEl.textContent = stats.highScore.toLocaleString();
       gameoverOverlay.classList.remove('hidden');
     }
   });
 
-  // Display initial high score
   highscoreDisplay.textContent = runner.highScore.toLocaleString();
 
-  // Handle Resize
   window.addEventListener('resize', () => runner.resize());
 
-  // Input Handling: Keyboard
+  // Keyboard Controls
   window.addEventListener('keydown', (e) => {
-    if (e.repeat) return; // Prevent key repeat auto-trigger
+    if (e.repeat) return;
 
     if (e.code === 'Space') {
       e.preventDefault();
@@ -124,7 +90,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Input Handling: Control Buttons
+  // Button Controls
   btnLeft.addEventListener('click', (e) => {
     e.preventDefault();
     runner.moveLeft();
@@ -143,7 +109,13 @@ window.addEventListener('DOMContentLoaded', () => {
   btnStart.addEventListener('click', () => runner.start());
   btnRestart.addEventListener('click', () => runner.start());
 
-  // Touch Swipe on Canvas
+  // Sound Toggle
+  btnSound.addEventListener('click', () => {
+    const isMuted = audio.toggleMute();
+    btnSound.textContent = isMuted ? '🔇' : '🔊';
+  });
+
+  // Touch swipe on canvas
   let touchStartX = 0;
   let touchStartY = 0;
   canvas.addEventListener('touchstart', (e) => {
@@ -165,53 +137,16 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      if (Math.max(absDx, absDy) > 25) {
+      if (Math.max(absDx, absDy) > 20) {
         if (absDx > absDy) {
           if (dx < 0) runner.moveLeft();
           else runner.moveRight();
         } else {
-          if (dy < 0) runner.jump(); // Swipe up jumps
+          if (dy < 0) runner.jump();
         }
       } else {
-        // Simple tap on canvas triggers jump
         runner.jump();
       }
     }
   }, { passive: true });
-
-  // Parts Manual Drawer
-  function openPartsDrawer() {
-    partsDrawer.classList.remove('closed');
-  }
-
-  function closePartsDrawer() {
-    partsDrawer.classList.add('closed');
-  }
-
-  btnParts.addEventListener('click', openPartsDrawer);
-  btnViewParts.addEventListener('click', openPartsDrawer);
-  btnCloseParts.addEventListener('click', closePartsDrawer);
-
-  function populatePartsManual() {
-    partsList.innerHTML = '';
-    COMPUTER_PARTS.forEach(part => {
-      const card = document.createElement('div');
-      card.className = 'part-card';
-
-      const isBonus = part.type === 'collectible';
-      card.innerHTML = `
-        <div class="part-card-img">
-          <img src="${part.svg}" alt="${part.name}">
-        </div>
-        <div class="part-card-info">
-          <div class="part-card-name">${part.name}</div>
-          <div class="part-card-comment">"${part.carterComment}"</div>
-        </div>
-        <div class="part-card-badge" style="color: ${isBonus ? '#0284c7' : '#ef4444'};">
-          ${isBonus ? `+${part.points} PTS` : 'OBSTACLE'}
-        </div>
-      `;
-      partsList.appendChild(card);
-    });
-  }
 });

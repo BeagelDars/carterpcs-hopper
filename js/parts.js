@@ -1,151 +1,95 @@
 // js/parts.js
-// Actual Computer Parts definition for Carter PCs 3-Lane Runner
+// 5-Lane Cartoon Computer Parts Definition
 
 export const COMPUTER_PARTS = [
   {
     id: 'gpu_rtx4090',
-    name: 'RTX 4090 24GB',
+    name: 'RTX 4090',
     type: 'obstacle',
     svg: 'assets/parts/gpu_rtx4090.svg',
-    width: 140,
-    height: 78,
-    hitbox: { w: 110, h: 54 },
-    heightLevel: 'ground', // can jump over!
-    rarity: 'legendary',
-    carterComment: 'Careful with that 4090! That costs more than my car!',
+    width: 88,
+    height: 50,
+    hitbox: { w: 72, h: 40 },
     points: 250
   },
   {
     id: 'cpu_processor',
-    name: 'Core i9-14900KS',
+    name: 'Intel Core i9',
     type: 'obstacle',
     svg: 'assets/parts/cpu_processor.svg',
-    width: 90,
-    height: 90,
-    hitbox: { w: 70, h: 70 },
-    heightLevel: 'ground',
-    rarity: 'rare',
-    carterComment: 'Watch the IHS! Don’t overheat the silicon!',
+    width: 68,
+    height: 68,
+    hitbox: { w: 56, h: 56 },
     points: 180
   },
   {
     id: 'motherboard',
-    name: 'Z790 Gaming Motherboard',
+    name: 'Motherboard',
     type: 'obstacle',
     svg: 'assets/parts/motherboard.svg',
-    width: 110,
-    height: 110,
-    hitbox: { w: 90, h: 90 },
-    heightLevel: 'ground',
-    rarity: 'epic',
-    carterComment: 'Don’t snap the PCIe latches!',
+    width: 76,
+    height: 76,
+    hitbox: { w: 64, h: 64 },
     points: 220
   },
   {
     id: 'ram_rgb',
-    name: 'DDR5 64GB RGB RAM',
+    name: 'RGB RAM Stick',
     type: 'obstacle',
     svg: 'assets/parts/ram_rgb.svg',
-    width: 120,
-    height: 44,
-    hitbox: { w: 100, h: 36 },
-    heightLevel: 'ground',
-    rarity: 'uncommon',
-    carterComment: 'Push till it clicks! Dual channel speed!',
+    width: 84,
+    height: 36,
+    hitbox: { w: 70, h: 28 },
     points: 140
   },
   {
     id: 'aio_cooler',
-    name: '240mm AIO Liquid Cooler',
+    name: 'Liquid Cooler',
     type: 'obstacle',
     svg: 'assets/parts/aio_cooler.svg',
-    width: 115,
-    height: 80,
-    hitbox: { w: 95, h: 65 },
-    heightLevel: 'ground',
-    rarity: 'rare',
-    carterComment: 'Keep the tubes untangled, liquid cooling active!',
+    width: 80,
+    height: 58,
+    hitbox: { w: 68, h: 48 },
     points: 190
   },
   {
     id: 'psu_power',
-    name: '1000W 80+ Gold PSU',
+    name: 'Power Supply',
     type: 'obstacle',
     svg: 'assets/parts/psu_power.svg',
-    width: 100,
-    height: 82,
-    hitbox: { w: 80, h: 66 },
-    heightLevel: 'ground',
-    rarity: 'uncommon',
-    carterComment: 'Only use cables that came with this PSU!',
+    width: 72,
+    height: 60,
+    hitbox: { w: 60, h: 50 },
     points: 160
   },
   {
     id: 'nvme_ssd',
-    name: 'Gen5 NVMe SSD 4TB',
+    name: 'NVMe SSD',
     type: 'obstacle',
     svg: 'assets/parts/nvme_ssd.svg',
-    width: 115,
-    height: 40,
-    hitbox: { w: 95, h: 32 },
-    heightLevel: 'ground',
-    rarity: 'common',
-    carterComment: '14,000 MB/s speed right under our wheels!',
+    width: 82,
+    height: 32,
+    hitbox: { w: 68, h: 24 },
     points: 130
   },
   {
     id: 'bent_pins',
-    name: '⚠️ Bent CPU Pins Hazard',
+    name: 'Bent CPU Pins!',
     type: 'obstacle',
     svg: 'assets/parts/bent_pins.svg',
-    width: 95,
-    height: 58,
-    hitbox: { w: 80, h: 48 },
-    heightLevel: 'ground',
-    rarity: 'danger',
-    carterComment: 'NOOO! THE CPU PINS! Jump over it!',
+    width: 72,
+    height: 46,
+    hitbox: { w: 60, h: 38 },
     points: 300
   },
   {
     id: 'thermal_paste',
-    name: 'Thermal Paste Tube',
+    name: 'Thermal Paste',
     type: 'collectible',
     svg: 'assets/parts/thermal_paste.svg',
-    width: 90,
-    height: 32,
-    hitbox: { w: 60, h: 28 },
-    heightLevel: 'ground',
-    rarity: 'bonus',
-    carterComment: 'Pea-sized drop! Perfect thermal conductivity!',
+    width: 72,
+    height: 34,
+    hitbox: { w: 54, h: 26 },
     points: 500
   }
 ];
-
-export const CARTER_QUOTES = {
-  nearMiss: [
-    'Close call!',
-    'Calculated!',
-    'Smooth drift!',
-    'Precision build!'
-  ],
-  jump: [
-    'Airborne!',
-    'Yeet!',
-    'Vaulting the GPU!',
-    'Over the motherboard!'
-  ],
-  collect: [
-    '+500 Thermal Paste!',
-    'Cooling boosted!',
-    'Temps dropped 10°C!',
-    'Pea size perfection!'
-  ],
-  crash: [
-    'You bent the CPU socket pins!',
-    'GPU sag took us down!',
-    'Forgot the Motherboard I/O shield!',
-    'Thermal throttled to 0 FPS!',
-    'Cable management caught in the fan!',
-    'Forgot to remove the CPU cooler plastic sticker!'
-  ]
-};

@@ -1,7 +1,8 @@
 // js/game.js
-// Core 3-Lane Runner Engine with Carter Kart & Computer Parts
+// 5-Lane Cartoon Runner Engine with Carter Kart & Computer Parts
 
-import { COMPUTER_PARTS, CARTER_QUOTES } from './parts.js';
+import { COMPUTER_PARTS } from './parts.js';
+import { audio } from './audio.js';
 
 export class CarterRunner {
   constructor(canvas, uiHooks) {
@@ -10,68 +11,69 @@ export class CarterRunner {
     this.ui = uiHooks;
 
     // Game state
-    this.state = 'START'; // 'START' | 'PLAYING' | 'PAUSED' | 'GAMEOVER'
+    this.state = 'START'; // 'START' | 'PLAYING' | 'GAMEOVER'
     this.score = 0;
     this.highScore = parseInt(localStorage.getItem('carter_runner_highscore') || '0', 10);
-    this.distance = 0;
-    this.baseSpeed = 420; // px / sec
+    this.baseSpeed = 380; // px/sec
     this.speed = this.baseSpeed;
-    this.maxSpeed = 740;
-    this.partsDodged = 0;
-    this.pasteCollected = 0;
+    this.maxSpeed = 660;
 
-    // Road & Dimensions
+    // 5-Lane Road Geometry
+    this.laneCount = 5;
+    this.currentLane = 2; // Center lane (0, 1, 2, 3, 4)
     this.width = 0;
     this.height = 0;
     this.dpr = window.devicePixelRatio || 1;
-    this.roadWidth = 420;
+    this.roadWidth = 520;
     this.roadLeft = 0;
-    this.laneWidth = 140;
+    this.laneWidth = 104;
     this.roadOffset = 0;
 
-    // 3 Lanes: 0: Left, 1: Center, 2: Right
-    this.currentLane = 1; // Start in center
+    // Player with Cartoon Squash & Stretch + Smooth Steering
     this.player = {
-      lane: 1,
+      lane: 2,
       x: 0,
       targetX: 0,
       y: 0,
-      width: 80,
-      height: 120,
+      width: 66,
+      height: 90,
       tilt: 0,
       targetTilt: 0,
-      // Jump physics
+      // Cartoon stretch/squash
+      scaleX: 1,
+      scaleY: 1,
+      idleBob: 0,
+      // Jump
       isJumping: false,
-      jumpDuration: 0.78, // seconds
+      jumpDuration: 0.82,
       jumpTimer: 0,
       jumpZ: 0,
       // Cooldown
-      jumpCooldown: 1.35, // seconds total
+      jumpCooldown: 1.4,
       cooldownTimer: 0,
       wasOnCooldown: false
     };
 
-    // Obstacles and Collectibles
+    // Obstacles, Collectibles, Particles & Floating Texts
     this.obstacles = [];
     this.particles = [];
     this.floatingTexts = [];
-    this.lastWaveY = -100;
-    this.lastOpenLanes = [0, 1, 2];
+    this.lastOpenLanes = [1, 2, 3];
 
-    // Screen shake
+    // Screen Shake
     this.shakeDuration = 0;
     this.shakeIntensity = 0;
 
-    // Asset Preloading
+    // Assets
     this.images = {};
     this.imagesLoaded = false;
     this.preloadAssets();
 
     // Timing
     this.lastTime = 0;
+    this.gameTime = 0;
     this.animationId = null;
 
-    // Bindings
     this.loop = this.loop.bind(this);
     this.resize();
   }
@@ -86,19 +88,14 @@ export class CarterRunner {
       }
     };
 
-    // Load Carter Kart
     const kartImg = new Image();
     kartImg.src = 'assets/carter_kart.png';
     kartImg.onload = () => {
       this.images['kart'] = kartImg;
       checkDone();
     };
-    kartImg.onerror = () => {
-      console.warn('Failed to load Carter Kart image');
-      checkDone();
-    };
+    kartImg.onerror = () => checkDone();
 
-    // Load Computer Parts SVGs
     COMPUTER_PARTS.forEach(part => {
       const img = new Image();
       img.src = part.svg;
@@ -106,10 +103,7 @@ export class CarterRunner {
         this.images[part.id] = img;
         checkDone();
       };
-      img.onerror = () => {
-        console.warn('Failed to load part SVG:', part.svg);
-        checkDone();
-      };
+      img.onerror = () => checkDone();
     });
   }
 
@@ -123,13 +117,13 @@ export class CarterRunner {
     this.ctx.resetTransform();
     this.ctx.scale(this.dpr, this.dpr);
 
-    // Responsive road width
-    this.roadWidth = Math.min(this.width * 0.94, 440);
+    // 5 Lanes responsive width
+    this.roadWidth = Math.min(this.width * 0.96, 540);
     this.roadLeft = (this.width - this.roadWidth) / 2;
-    this.laneWidth = this.roadWidth / 3;
+    this.laneWidth = this.roadWidth / this.laneCount;
 
-    // Player position (near bottom of canvas)
-    this.player.y = this.height - 180;
+    // Position player near bottom
+    this.player.y = this.height - 150;
     this.updateTargetX();
     this.player.x = this.player.targetX;
 
@@ -147,29 +141,28 @@ export class CarterRunner {
   }
 
   start() {
+    audio.ensure();
     this.state = 'PLAYING';
     this.score = 0;
-    this.distance = 0;
     this.speed = this.baseSpeed;
-    this.partsDodged = 0;
-    this.pasteCollected = 0;
     this.obstacles = [];
     this.particles = [];
     this.floatingTexts = [];
-    this.lastWaveY = -120;
-    this.lastOpenLanes = [0, 1, 2];
+    this.lastOpenLanes = [1, 2, 3];
 
-    this.player.lane = 1;
+    this.player.lane = 2; // Center
     this.player.isJumping = false;
     this.player.jumpTimer = 0;
     this.player.jumpZ = 0;
+    this.player.scaleX = 1;
+    this.player.scaleY = 1;
     this.player.cooldownTimer = 0;
     this.player.wasOnCooldown = false;
     this.updateTargetX();
     this.player.x = this.player.targetX;
 
     if (this.ui.onStateChange) this.ui.onStateChange(this.state);
-    if (this.ui.onScoreUpdate) this.ui.onScoreUpdate(this.score, this.highScore, this.getFpsDisplay());
+    if (this.ui.onScoreUpdate) this.ui.onScoreUpdate(this.score, this.highScore);
 
     this.lastTime = performance.now();
     if (!this.animationId) {
@@ -177,31 +170,33 @@ export class CarterRunner {
     }
   }
 
+  // Smooth, non-instant lane movement
   moveLeft() {
     if (this.state !== 'PLAYING') return;
     if (this.player.lane > 0) {
       this.player.lane--;
       this.updateTargetX();
-      this.player.targetTilt = -0.15; // Lean left
+      this.player.targetTilt = -0.16; // Playful cartoon tilt
+      audio.playLaneSwitch(-1);
       this.spawnTirePuff(-1);
     }
   }
 
   moveRight() {
     if (this.state !== 'PLAYING') return;
-    if (this.player.lane < 2) {
+    if (this.player.lane < this.laneCount - 1) {
       this.player.lane++;
       this.updateTargetX();
-      this.player.targetTilt = 0.15; // Lean right
-      this.spawnTuffPuff(1);
+      this.player.targetTilt = 0.16; // Playful cartoon tilt
+      audio.playLaneSwitch(1);
+      this.spawnTirePuff(1);
     }
   }
 
   jump() {
     if (this.state !== 'PLAYING') return;
-    // Check cooldown
     if (this.player.cooldownTimer > 0 || this.player.isJumping) {
-      return false; // Can't jump yet
+      return false;
     }
 
     this.player.isJumping = true;
@@ -209,28 +204,28 @@ export class CarterRunner {
     this.player.cooldownTimer = this.player.jumpCooldown;
     this.player.wasOnCooldown = true;
 
-    this.spawnJumpParticles();
+    // Cartoon launch stretch!
+    this.player.scaleX = 0.85;
+    this.player.scaleY = 1.25;
 
-    // Random cheerful carter jump quote
-    if (Math.random() < 0.3) {
-      const q = CARTER_QUOTES.jump[Math.floor(Math.random() * CARTER_QUOTES.jump.length)];
-      this.addFloatingText(this.player.x, this.player.y - 40, q, '#0284c7');
-    }
+    audio.playJump();
+    this.spawnJumpParticles();
+    this.addFloatingText(this.player.x, this.player.y - 40, 'BOING! ⭐', '#f59e0b', 18);
 
     return true;
   }
 
   spawnJumpParticles() {
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 10; i++) {
       this.particles.push({
-        x: this.player.x + (Math.random() * 40 - 20),
-        y: this.player.y + 40,
-        vx: (Math.random() - 0.5) * 60,
-        vy: Math.random() * 40 + 20,
-        radius: Math.random() * 3 + 2,
-        color: '#94a3b8',
-        alpha: 0.7,
-        decay: 2.2
+        x: this.player.x + (Math.random() * 30 - 15),
+        y: this.player.y + 35,
+        vx: (Math.random() - 0.5) * 80,
+        vy: Math.random() * 50 + 20,
+        radius: Math.random() * 5 + 3,
+        color: i % 2 === 0 ? '#38bdf8' : '#facc15',
+        alpha: 0.9,
+        decay: 2.5
       });
     }
   }
@@ -238,28 +233,24 @@ export class CarterRunner {
   spawnTirePuff(dir) {
     for (let i = 0; i < 4; i++) {
       this.particles.push({
-        x: this.player.x + dir * 25,
-        y: this.player.y + 40,
-        vx: dir * (Math.random() * 40 + 10),
+        x: this.player.x + dir * 20,
+        y: this.player.y + 35,
+        vx: dir * (Math.random() * 40 + 20),
         vy: (Math.random() - 0.5) * 20,
-        radius: Math.random() * 2.5 + 1.5,
-        color: '#cbd5e1',
-        alpha: 0.6,
-        decay: 3.0
+        radius: Math.random() * 4 + 2,
+        color: '#ffffff',
+        alpha: 0.8,
+        decay: 3.2
       });
     }
   }
 
-  spawnTuffPuff(dir) {
-    this.spawnTirePuff(dir);
-  }
-
-  triggerShake(intensity = 10, duration = 0.35) {
+  triggerShake(intensity = 12, duration = 0.3) {
     this.shakeIntensity = intensity;
     this.shakeDuration = duration;
   }
 
-  addFloatingText(x, y, text, color = '#0f172a', size = 14) {
+  addFloatingText(x, y, text, color = '#f59e0b', size = 16) {
     this.floatingTexts.push({
       x,
       y,
@@ -267,25 +258,15 @@ export class CarterRunner {
       color,
       size,
       alpha: 1,
-      vy: -55
+      vy: -65
     });
   }
 
-  getFpsDisplay() {
-    // Convert speed to fun "FPS" metric (Carter PCs theme!)
-    // 420 px/s -> 60 FPS, 740 px/s -> 360 FPS
-    const ratio = (this.speed - this.baseSpeed) / (this.maxSpeed - this.baseSpeed);
-    const fps = Math.round(60 + ratio * 300);
-    return `${fps} FPS`;
-  }
-
-  // GUARANTEED SOLVABILITY PROCEDURAL GENERATOR
-  // Enforces that at least 1 lane is always open and traversable
+  // 5-LANE GUARANTEED SOLVABILITY PROCEDURAL GENERATOR
+  // Always leaves at least 2 lanes wide open and guarantees smooth pathing
   updateObstacleSpawning(dt) {
-    // Gap between waves: ensures ample human reaction time
-    const minGap = Math.max(380, this.speed * 0.95);
+    const minGap = Math.max(360, this.speed * 0.9);
 
-    // Check if leading obstacle has moved down enough to spawn next wave
     let canSpawn = false;
     if (this.obstacles.length === 0) {
       canSpawn = true;
@@ -301,54 +282,32 @@ export class CarterRunner {
 
     if (!canSpawn) return;
 
-    // Pick wave pattern
-    const rand = Math.random();
-    let openLanes = [];
+    // Pick 2 or 3 lanes to block (never 4 or 5!)
+    // Ensure at least 2 lanes are open
+    const numObstacles = Math.random() < 0.65 ? 2 : 3;
 
-    // Ensure solvability with previous wave:
-    // If last wave left only 1 lane open (say lane 0), the new wave must not only leave lane 2 open
-    // without adjacent path. We ensure at least one open lane is adjacent (distance <= 1) to previous open lanes.
-    const lastOpen = this.lastOpenLanes;
+    // To guarantee reachability, pick open lanes close to last open lanes
+    const allLanes = [0, 1, 2, 3, 4];
+    const shuffled = [...allLanes].sort(() => Math.random() - 0.5);
 
-    if (rand < 0.55) {
-      // 1 obstacle wave (2 lanes completely open) -> very forgiving & dynamic
-      const blockedLane = Math.floor(Math.random() * 3);
-      openLanes = [0, 1, 2].filter(l => l !== blockedLane);
-      this.spawnObstacleAtLane(blockedLane, -130);
-    } else if (rand < 0.85) {
-      // 2 obstacles wave (1 lane open) -> requires finding the open lane or jumping
-      // Select open lane that is easy to reach from lastOpen
-      const possibleOpenLanes = [0, 1, 2].filter(candidate => {
-        return lastOpen.some(prev => Math.abs(prev - candidate) <= 1);
-      });
-      const chosenOpenLane = possibleOpenLanes[Math.floor(Math.random() * possibleOpenLanes.length)];
-      openLanes = [chosenOpenLane];
+    // Keep at least 2 open
+    const openLanes = shuffled.slice(0, this.laneCount - numObstacles);
+    const blockedLanes = shuffled.slice(this.laneCount - numObstacles);
 
-      [0, 1, 2].forEach(lane => {
-        if (lane !== chosenOpenLane) {
-          this.spawnObstacleAtLane(lane, -130);
-        }
-      });
-    } else {
-      // Staggered obstacles wave (slalom run: Lane A then Lane B 220px further)
-      const laneA = Math.floor(Math.random() * 3);
-      let laneB = (laneA + 1 + Math.floor(Math.random() * 2)) % 3;
-      this.spawnObstacleAtLane(laneA, -130);
-      this.spawnObstacleAtLane(laneB, -130 - 220);
-      openLanes = [0, 1, 2].filter(l => l !== laneB);
-    }
+    blockedLanes.forEach(lane => {
+      this.spawnObstacleAtLane(lane, -120);
+    });
 
-    // Occasionally spawn collectible Thermal Paste in an open lane or floating over an obstacle
-    if (Math.random() < 0.4) {
+    // Spawn bonus collectible Thermal Paste in one of the open lanes
+    if (Math.random() < 0.45) {
       const pasteLane = openLanes[Math.floor(Math.random() * openLanes.length)];
-      this.spawnCollectibleAtLane(pasteLane, -130 - 100);
+      this.spawnCollectibleAtLane(pasteLane, -120 - 90);
     }
 
     this.lastOpenLanes = openLanes;
   }
 
   spawnObstacleAtLane(lane, yPos) {
-    // Pick a computer part (exclude collectibles from obstacles)
     const obstacleParts = COMPUTER_PARTS.filter(p => p.type === 'obstacle');
     const part = obstacleParts[Math.floor(Math.random() * obstacleParts.length)];
 
@@ -362,8 +321,7 @@ export class CarterRunner {
       height: part.height,
       hitbox: part.hitbox,
       type: 'obstacle',
-      cleared: false,
-      nearMissed: false
+      cleared: false
     });
   }
 
@@ -379,52 +337,69 @@ export class CarterRunner {
       height: pastePart.height,
       hitbox: pastePart.hitbox,
       type: 'collectible',
-      cleared: false,
-      nearMissed: false
+      cleared: false
     });
   }
 
   update(dt) {
     if (this.state !== 'PLAYING') return;
 
-    // Speed progression: gradually accelerates with distance
-    this.distance += this.speed * dt;
-    this.speed = Math.min(this.maxSpeed, this.baseSpeed + Math.floor(this.score * 0.12));
+    this.gameTime += dt;
+
+    // Speed progression
+    this.speed = Math.min(this.maxSpeed, this.baseSpeed + Math.floor(this.score * 0.1));
     this.score += Math.round(this.speed * dt * 0.1);
 
-    // Smooth lane steering physics
+    // SMOOTH, DELIBERATE LANE GLIDE (Not instant/snappy!)
+    // Using a smooth ease interpolation factor of 0.11
     const dtRatio = Math.min(dt * 60, 2);
-    this.player.x += (this.player.targetX - this.player.x) * (0.24 * dtRatio);
-    this.player.tilt += (this.player.targetTilt - this.player.tilt) * (0.2 * dtRatio);
-    this.player.targetTilt *= 0.88; // decay tilt back to center
+    this.player.x += (this.player.targetX - this.player.x) * (0.11 * dtRatio);
+    this.player.tilt += (this.player.targetTilt - this.player.tilt) * (0.12 * dtRatio);
+    this.player.targetTilt *= 0.86;
 
-    // Jump physics
+    // Idle cartoon engine bounce
+    this.player.idleBob = Math.sin(this.gameTime * 14) * 2.2;
+
+    // Jump physics with cartoon squash & stretch
     if (this.player.isJumping) {
       this.player.jumpTimer -= dt;
       if (this.player.jumpTimer <= 0) {
         this.player.isJumping = false;
         this.player.jumpTimer = 0;
         this.player.jumpZ = 0;
+
+        // Cartoon landing squash!
+        this.player.scaleX = 1.25;
+        this.player.scaleY = 0.8;
+
+        audio.playLand();
         this.spawnJumpParticles();
       } else {
         const progress = 1 - (this.player.jumpTimer / this.player.jumpDuration);
-        // Smooth parabolic arc
-        this.player.jumpZ = Math.sin(progress * Math.PI) * 88;
+        this.player.jumpZ = Math.sin(progress * Math.PI) * 96;
+
+        // Peak airborne stretch
+        const airProgress = Math.sin(progress * Math.PI);
+        this.player.scaleX = 1 - airProgress * 0.1;
+        this.player.scaleY = 1 + airProgress * 0.15;
       }
     } else {
+      // Ease scale back to normal (1, 1)
+      this.player.scaleX += (1 - this.player.scaleX) * 0.15;
+      this.player.scaleY += (1 - this.player.scaleY) * 0.15;
       this.player.jumpZ = 0;
     }
 
-    // Jump Cooldown handling
+    // Cooldown
     if (this.player.cooldownTimer > 0) {
       this.player.cooldownTimer = Math.max(0, this.player.cooldownTimer - dt);
       if (this.player.cooldownTimer === 0 && this.player.wasOnCooldown) {
         this.player.wasOnCooldown = false;
+        audio.playCooldownReady();
         if (this.ui.onCooldownReady) this.ui.onCooldownReady();
       }
     }
 
-    // Cooldown UI notification
     if (this.ui.onCooldownUpdate) {
       const remaining = this.player.cooldownTimer;
       const total = this.player.jumpCooldown;
@@ -432,8 +407,8 @@ export class CarterRunner {
       this.ui.onCooldownUpdate(progress, remaining);
     }
 
-    // Road dashed line animation
-    this.roadOffset = (this.roadOffset + this.speed * dt) % 60;
+    // Road scroll
+    this.roadOffset = (this.roadOffset + this.speed * dt) % 64;
 
     // Spawn obstacles
     this.updateObstacleSpawning(dt);
@@ -443,24 +418,19 @@ export class CarterRunner {
       const obs = this.obstacles[i];
       obs.y += this.speed * dt;
 
-      // Check collision with player
       this.checkObstacleInteraction(obs);
 
-      // Despawn if off bottom of screen
       if (obs.y > this.height + 150) {
         this.obstacles.splice(i, 1);
-        if (obs.type === 'obstacle' && !obs.cleared) {
-          this.partsDodged++;
-        }
       }
     }
 
-    // Screen shake update
+    // Shake
     if (this.shakeDuration > 0) {
       this.shakeDuration -= dt;
     }
 
-    // Particles update
+    // Particles
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];
       p.x += p.vx * dt;
@@ -471,19 +441,19 @@ export class CarterRunner {
       }
     }
 
-    // Floating text popups
+    // Floating text
     for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
       const ft = this.floatingTexts[i];
       ft.y += ft.vy * dt;
-      ft.alpha -= 0.9 * dt;
+      ft.alpha -= 0.85 * dt;
       if (ft.alpha <= 0) {
         this.floatingTexts.splice(i, 1);
       }
     }
 
-    // Update UI HUD
+    // Score callback
     if (this.ui.onScoreUpdate) {
-      this.ui.onScoreUpdate(this.score, this.highScore, this.getFpsDisplay());
+      this.ui.onScoreUpdate(this.score, this.highScore);
     }
   }
 
@@ -492,10 +462,10 @@ export class CarterRunner {
 
     // Player Hitbox
     const pBox = {
-      x: this.player.x - 28,
-      y: this.player.y - 38,
-      w: 56,
-      h: 84
+      x: this.player.x - 22,
+      y: this.player.y - 30,
+      w: 44,
+      h: 68
     };
 
     // Obstacle Hitbox
@@ -506,7 +476,6 @@ export class CarterRunner {
       h: obs.hitbox.h
     };
 
-    // AABB Overlap check
     const isOverlapping =
       pBox.x < oBox.x + oBox.w &&
       pBox.x + pBox.w > oBox.x &&
@@ -515,91 +484,67 @@ export class CarterRunner {
 
     if (isOverlapping) {
       if (obs.type === 'collectible') {
-        // Collect Thermal Paste!
         this.score += obs.part.points;
-        this.pasteCollected++;
-        this.addFloatingText(obs.x, obs.y - 20, `+${obs.part.points} PASTE!`, '#0284c7', 16);
+        audio.playCollect();
+        this.addFloatingText(obs.x, obs.y - 20, '+500 🍯', '#0284c7', 20);
         this.spawnCollectSparkles(obs.x, obs.y);
 
-        // Remove collectible
         const idx = this.obstacles.indexOf(obs);
         if (idx !== -1) this.obstacles.splice(idx, 1);
         return;
       }
 
-      // It's an obstacle!
-      // CAN WE JUMP OVER IT?
-      // Jump height threshold: 24px clears ground obstacle
-      if (this.player.isJumping && this.player.jumpZ >= 24) {
-        // Successfully jumped over!
+      // Jump clearance check (jumpZ >= 20 clears ground obstacles)
+      if (this.player.isJumping && this.player.jumpZ >= 20) {
         if (!obs.cleared) {
           obs.cleared = true;
           this.score += 150;
-          this.addFloatingText(this.player.x, this.player.y - 60, `JUMPED OVER ${obs.part.name}! +150`, '#16a34a', 14);
+          this.addFloatingText(this.player.x, this.player.y - 50, '+150 JUMP! ⭐', '#16a34a', 16);
         }
       } else {
-        // CRASH!
         this.gameOver(obs);
-      }
-    } else {
-      // Near miss check: within close proximity horizontally while passing vertically
-      if (obs.type === 'obstacle' && !obs.nearMissed && !obs.cleared) {
-        const yDist = Math.abs(this.player.y - obs.y);
-        const xDist = Math.abs(this.player.x - obs.x);
-        if (yDist < 30 && xDist > 30 && xDist < 85) {
-          obs.nearMissed = true;
-          this.score += 60;
-          const comment = CARTER_QUOTES.nearMiss[Math.floor(Math.random() * CARTER_QUOTES.nearMiss.length)];
-          this.addFloatingText(this.player.x + (this.player.x < obs.x ? -30 : 30), this.player.y - 20, `${comment} +60`, '#059669', 12);
-        }
       }
     }
   }
 
   spawnCollectSparkles(x, y) {
-    for (let i = 0; i < 12; i++) {
-      const angle = (Math.PI * 2 * i) / 12;
-      const speed = Math.random() * 80 + 40;
+    for (let i = 0; i < 14; i++) {
+      const angle = (Math.PI * 2 * i) / 14;
+      const spd = Math.random() * 90 + 50;
       this.particles.push({
         x,
         y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        radius: Math.random() * 3 + 2,
-        color: '#38bdf8',
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd,
+        radius: Math.random() * 4 + 2,
+        color: '#facc15',
         alpha: 1,
-        decay: 1.8
+        decay: 2.0
       });
     }
   }
 
   gameOver(fatalObstacle) {
     this.state = 'GAMEOVER';
-    this.triggerShake(14, 0.45);
+    audio.playCrash();
+    this.triggerShake(16, 0.4);
 
-    // Save Highscore
     if (this.score > this.highScore) {
       this.highScore = this.score;
       localStorage.setItem('carter_runner_highscore', this.highScore.toString());
     }
 
-    // Pick funny Carter crash quote
-    let quote = fatalObstacle.part.carterComment || CARTER_QUOTES.crash[0];
-    if (Math.random() < 0.4) {
-      quote = CARTER_QUOTES.crash[Math.floor(Math.random() * CARTER_QUOTES.crash.length)];
-    }
-
-    // Spawn crash parts explosion
-    for (let i = 0; i < 20; i++) {
+    // Explosion particles
+    for (let i = 0; i < 24; i++) {
       this.particles.push({
         x: this.player.x,
         y: this.player.y,
-        vx: (Math.random() - 0.5) * 220,
-        vy: (Math.random() - 0.5) * 220,
-        radius: Math.random() * 4 + 2,
-        color: i % 2 === 0 ? '#ef4444' : '#64748b',
+        vx: (Math.random() - 0.5) * 260,
+        vy: (Math.random() - 0.5) * 260,
+        radius: Math.random() * 5 + 3,
+        color: ['#ef4444', '#f59e0b', '#38bdf8', '#ffffff'][i % 4],
         alpha: 1,
-        decay: 1.4
+        decay: 1.6
       });
     }
 
@@ -607,10 +552,7 @@ export class CarterRunner {
       this.ui.onGameOver({
         score: this.score,
         highScore: this.highScore,
-        obstacleName: fatalObstacle.part.name,
-        quote: quote,
-        partsDodged: this.partsDodged,
-        pasteCollected: this.pasteCollected
+        obstacleName: fatalObstacle.part.name
       });
     }
   }
@@ -620,26 +562,25 @@ export class CarterRunner {
 
     this.ctx.save();
 
-    // Screen shake transform
     if (this.shakeDuration > 0) {
-      const offsetX = (Math.random() - 0.5) * this.shakeIntensity;
-      const offsetY = (Math.random() - 0.5) * this.shakeIntensity;
-      this.ctx.translate(offsetX, offsetY);
+      const ox = (Math.random() - 0.5) * this.shakeIntensity;
+      const oy = (Math.random() - 0.5) * this.shakeIntensity;
+      this.ctx.translate(ox, oy);
     }
 
-    // 1. Draw Clean Minimalist Road
+    // 1. Bright Cartoon Background & 5-Lane Track
     this.renderRoad();
 
-    // 2. Draw Obstacles & Collectibles
+    // 2. Obstacles
     this.renderObstacles();
 
-    // 3. Draw Player Carter Kart
+    // 3. Carter Kart
     this.renderPlayer();
 
-    // 4. Draw Particles
+    // 4. Particles
     this.renderParticles();
 
-    // 5. Draw Floating Texts
+    // 5. Floating text
     this.renderFloatingTexts();
 
     this.ctx.restore();
@@ -651,40 +592,54 @@ export class CarterRunner {
     const rW = this.roadWidth;
     const lW = this.laneWidth;
 
-    // Road Asphalt / Surface (Minimalist Light Slate)
-    ctx.fillStyle = '#f8fafc';
+    // Cheerful pastel sky background
+    ctx.fillStyle = '#e0f2fe';
     ctx.fillRect(0, 0, this.width, this.height);
 
-    // Road Track Bed
-    ctx.fillStyle = '#f1f5f9';
+    // Cartoon grass / border sides
+    ctx.fillStyle = '#86efac';
+    ctx.fillRect(0, 0, rL, this.height);
+    ctx.fillRect(rL + rW, 0, this.width - (rL + rW), this.height);
+
+    // Cartoon Red & White Candy Curbs
+    const curbW = 12;
+    const curbH = 32;
+    const curbOffset = this.roadOffset % curbH;
+
+    for (let y = -curbH; y < this.height + curbH; y += curbH) {
+      const idx = Math.floor((y - curbOffset) / curbH);
+      const isRed = Math.abs(idx) % 2 === 0;
+      ctx.fillStyle = isRed ? '#ef4444' : '#ffffff';
+      // Left curb
+      ctx.fillRect(rL - curbW, y + curbOffset, curbW, curbH);
+      // Right curb
+      ctx.fillRect(rL + rW, y + curbOffset, curbW, curbH);
+    }
+
+    // Smooth Road Bed
+    ctx.fillStyle = '#f8fafc';
     ctx.fillRect(rL, 0, rW, this.height);
 
-    // Road Outer Borders (Crisp graphite lines)
-    ctx.lineWidth = 2.5;
-    ctx.strokeStyle = '#cbd5e1';
-    ctx.beginPath();
-    ctx.moveTo(rL, 0);
-    ctx.lineTo(rL, this.height);
-    ctx.moveTo(rL + rW, 0);
-    ctx.lineTo(rL + rW, this.height);
-    ctx.stroke();
+    // Crisp cartoon road border
+    ctx.strokeStyle = '#0f172a';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(rL, 0, rW, this.height);
 
-    // 2 Lane Dividers (Dashed minimalist markings)
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = '#e2e8f0';
-    ctx.setLineDash([24, 28]);
+    // 4 Cartoon Dashed Lane Dividers (for 5 lanes!)
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#cbd5e1';
+    ctx.setLineDash([20, 24]);
     ctx.lineDashOffset = -this.roadOffset;
 
-    ctx.beginPath();
-    // Lane 1 divider
-    ctx.moveTo(rL + lW, 0);
-    ctx.lineTo(rL + lW, this.height);
-    // Lane 2 divider
-    ctx.moveTo(rL + lW * 2, 0);
-    ctx.lineTo(rL + lW * 2, this.height);
-    ctx.stroke();
+    for (let i = 1; i < this.laneCount; i++) {
+      const lx = rL + i * lW;
+      ctx.beginPath();
+      ctx.moveTo(lx, 0);
+      ctx.lineTo(lx, this.height);
+      ctx.stroke();
+    }
 
-    ctx.setLineDash([]); // Reset line dash
+    ctx.setLineDash([]);
   }
 
   renderObstacles() {
@@ -696,31 +651,30 @@ export class CarterRunner {
       ctx.save();
       ctx.translate(obs.x, obs.y);
 
-      // Collectible gentle floating pulse
+      // Playful bob for collectibles
       if (obs.type === 'collectible') {
-        const floatOffset = Math.sin(performance.now() * 0.006) * 4;
+        const floatOffset = Math.sin(this.gameTime * 6) * 5;
         ctx.translate(0, floatOffset);
 
-        // Glow ring behind thermal paste
-        ctx.fillStyle = 'rgba(56, 189, 248, 0.18)';
+        // Cartoon golden halo
+        ctx.fillStyle = 'rgba(250, 204, 21, 0.35)';
         ctx.beginPath();
-        ctx.arc(0, 0, 32, 0, Math.PI * 2);
+        ctx.arc(0, 0, 28, 0, Math.PI * 2);
         ctx.fill();
       }
+
+      // Drop shadow underneath part
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.15)';
+      ctx.beginPath();
+      ctx.ellipse(0, obs.height / 2 + 3, obs.width * 0.45, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
 
       if (img && img.complete) {
         ctx.drawImage(img, -obs.width / 2, -obs.height / 2, obs.width, obs.height);
       } else {
-        // Fallback rectangle
         ctx.fillStyle = obs.type === 'collectible' ? '#0ea5e9' : '#334155';
         ctx.fillRect(-obs.width / 2, -obs.height / 2, obs.width, obs.height);
       }
-
-      // Minimalist part name tag
-      ctx.font = '600 10px system-ui, -apple-system, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillStyle = '#64748b';
-      ctx.fillText(obs.part.name, 0, obs.height / 2 + 13);
 
       ctx.restore();
     });
@@ -731,48 +685,34 @@ export class CarterRunner {
     const p = this.player;
 
     ctx.save();
-    ctx.translate(p.x, p.y);
+    ctx.translate(p.x, p.y + p.idleBob);
 
     // Jump shadow on ground
-    const shadowScale = Math.max(0.4, 1 - p.jumpZ * 0.006);
-    const shadowAlpha = Math.max(0.12, 0.3 - p.jumpZ * 0.002);
+    const shadowScale = Math.max(0.35, 1 - p.jumpZ * 0.006);
+    const shadowAlpha = Math.max(0.1, 0.32 - p.jumpZ * 0.002);
     ctx.fillStyle = `rgba(15, 23, 42, ${shadowAlpha})`;
     ctx.beginPath();
-    ctx.ellipse(0, 48, 36 * shadowScale, 14 * shadowScale, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 40, 32 * shadowScale, 12 * shadowScale, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Translate car up by jump altitude
+    // Altitude offset
     ctx.translate(0, -p.jumpZ);
 
-    // Apply steering roll tilt
+    // Cartoon tilt
     ctx.rotate(p.tilt);
 
-    // Scale up slightly during jump
-    const jumpScale = 1 + p.jumpZ * 0.0022;
-    ctx.scale(jumpScale, jumpScale);
+    // Cartoon squash and stretch
+    ctx.scale(p.scaleX, p.scaleY);
 
-    // Render Carter Kart
+    // Draw Carter Kart
     const kartImg = this.images['kart'];
     if (kartImg && kartImg.complete) {
       const kw = p.width;
       const kh = p.height;
       ctx.drawImage(kartImg, -kw / 2, -kh / 2, kw, kh);
     } else {
-      // Fallback minimalist car
       ctx.fillStyle = '#0f172a';
-      ctx.fillRect(-25, -45, 50, 90);
-    }
-
-    // If airborne, draw light wind lines
-    if (p.isJumping) {
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(-28, 35);
-      ctx.lineTo(-28, 55);
-      ctx.moveTo(28, 35);
-      ctx.lineTo(28, 55);
-      ctx.stroke();
+      ctx.fillRect(-22, -35, 44, 70);
     }
 
     ctx.restore();
@@ -796,11 +736,10 @@ export class CarterRunner {
     this.floatingTexts.forEach(ft => {
       ctx.save();
       ctx.globalAlpha = Math.max(0, ft.alpha);
-      ctx.font = `bold ${ft.size}px system-ui, -apple-system, sans-serif`;
+      ctx.font = `900 ${ft.size}px system-ui, -apple-system, sans-serif`;
       ctx.textAlign = 'center';
 
-      // White outline for contrast
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 4;
       ctx.strokeStyle = '#ffffff';
       ctx.strokeText(ft.text, ft.x, ft.y);
 
