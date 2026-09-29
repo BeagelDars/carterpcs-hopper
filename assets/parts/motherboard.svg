@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="vrmMetal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="chipsetHeatsink" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Shadow -->
+  <rect x="8" y="108" width="104" height="8" rx="4" fill="#0f172a" opacity="0.25"/>
+
+  <!-- PCB Board (Black/Slate) -->
+  <rect x="8" y="8" width="104" height="104" rx="4" fill="#0b0f19" stroke="#1e293b" stroke-width="2"/>
+
+  <!-- Mounting holes (4 corners + center) -->
+  <circle cx="14" cy="14" r="2.5" fill="none" stroke="#eab308" stroke-width="1"/>
+  <circle cx="106" cy="14" r="2.5" fill="none" stroke="#eab308" stroke-width="1"/>
+  <circle cx="14" cy="106" r="2.5" fill="none" stroke="#eab308" stroke-width="1"/>
+  <circle cx="106" cy="106" r="2.5" fill="none" stroke="#eab308" stroke-width="1"/>
+
+  <!-- Circuit lines traces -->
+  <path d="M 20 25 L 35 25 L 35 40 M 85 20 L 85 45 M 25 80 L 50 80 L 60 90" stroke="#1e3a8a" stroke-width="1" fill="none" opacity="0.4"/>
+
+  <!-- Rear I/O Shield -->
+  <rect x="10" y="18" width="12" height="42" rx="2" fill="#475569"/>
+
+  <!-- Top VRM Heatsink -->
+  <rect x="26" y="12" width="46" height="12" rx="2" fill="url(#vrmMetal)" stroke="#64748b" stroke-width="1"/>
+  <line x1="32" y1="14" x2="32" y2="22" stroke="#64748b" stroke-width="1"/>
+  <line x1="40" y1="14" x2="40" y2="22" stroke="#64748b" stroke-width="1"/>
+  <line x1="48" y1="14" x2="48" y2="22" stroke="#64748b" stroke-width="1"/>
+  <line x1="56" y1="14" x2="56" y2="22" stroke="#64748b" stroke-width="1"/>
+  <line x1="64" y1="14" x2="64" y2="22" stroke="#64748b" stroke-width="1"/>
+
+  <!-- Left VRM Heatsink -->
+  <rect x="24" y="26" width="12" height="34" rx="2" fill="url(#vrmMetal)" stroke="#64748b" stroke-width="1"/>
+
+  <!-- CPU Socket -->
+  <rect x="40" y="28" width="30" height="30" rx="3" fill="#1e293b" stroke="#e2e8f0" stroke-width="1.5"/>
+  <rect x="45" y="33" width="20" height="20" fill="#0f172a"/>
+  <!-- Retention arm -->
+  <line x1="38" y1="28" x2="38" y2="58" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- 4 DDR5 RAM Slots -->
+  <g fill="#0284c7">
+    <rect x="76" y="22" width="4" height="42" rx="1"/>
+    <rect x="83" y="22" width="4" height="42" rx="1"/>
+    <rect x="90" y="22" width="4" height="42" rx="1"/>
+    <rect x="97" y="22" width="4" height="42" rx="1"/>
+  </g>
+  <!-- Latches -->
+  <g fill="#e2e8f0">
+    <rect x="76" y="20" width="4" height="3" rx="0.5"/>
+    <rect x="83" y="20" width="4" height="3" rx="0.5"/>
+    <rect x="90" y="20" width="4" height="3" rx="0.5"/>
+    <rect x="97" y="20" width="4" height="3" rx="0.5"/>
+    <rect x="76" y="63" width="4" height="3" rx="0.5"/>
+    <rect x="83" y="63" width="4" height="3" rx="0.5"/>
+    <rect x="90" y="63" width="4" height="3" rx="0.5"/>
+    <rect x="97" y="63" width="4" height="3" rx="0.5"/>
+  </g>
+
+  <!-- PCIe x16 Armored Slot 1 -->
+  <rect x="18" y="68" width="62" height="7" rx="1.5" fill="#94a3b8" stroke="#cbd5e1" stroke-width="1"/>
+  <rect x="22" y="70" width="54" height="3" fill="#0f172a"/>
+
+  <!-- M.2 SSD Armor Shield -->
+  <rect x="22" y="78" width="48" height="8" rx="2" fill="#334155" stroke="#475569" stroke-width="1"/>
+  <text x="46" y="84" font-family="system-ui, sans-serif" font-size="4" font-weight="bold" fill="#38bdf8" text-anchor="middle">M.2 GEN5</text>
+
+  <!-- PCIe Slot 2 -->
+  <rect x="18" y="89" width="62" height="6" rx="1.5" fill="#334155"/>
+
+  <!-- Chipset Heatsink (Bottom Right) -->
+  <rect x="78" y="74" width="28" height="28" rx="4" fill="url(#chipsetHeatsink)" stroke="#0ea5e9" stroke-width="1"/>
+  <!-- RGB Carter Logo / Icon -->
+  <circle cx="92" cy="88" r="6" fill="#0284c7" opacity="0.8"/>
+  <text x="92" y="91" font-family="system-ui, sans-serif" font-size="5" font-weight="900" fill="#ffffff" text-anchor="middle">Z790</text>
+</svg>

@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 60" width="100" height="60">
+  <defs>
+    <linearGradient id="socketBase" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Shadow -->
+  <rect x="10" y="52" width="80" height="5" rx="2.5" fill="#0f172a" opacity="0.25"/>
+
+  <!-- Socket Body -->
+  <rect x="10" y="8" width="80" height="44" rx="4" fill="url(#socketBase)" stroke="#ef4444" stroke-width="1.5"/>
+
+  <!-- Warning Stripes on edges -->
+  <rect x="12" y="10" width="6" height="40" fill="#f59e0b"/>
+  <rect x="82" y="10" width="6" height="40" fill="#f59e0b"/>
+
+  <!-- Grid of Pins (Gold) -->
+  <g fill="#eab308">
+    <!-- Straight normal pins -->
+    <circle cx="26" cy="18" r="1.5"/>
+    <circle cx="34" cy="18" r="1.5"/>
+    <circle cx="42" cy="18" r="1.5"/>
+    <circle cx="58" cy="18" r="1.5"/>
+    <circle cx="66" cy="18" r="1.5"/>
+    <circle cx="74" cy="18" r="1.5"/>
+
+    <circle cx="26" cy="42" r="1.5"/>
+    <circle cx="34" cy="42" r="1.5"/>
+    <circle cx="42" cy="42" r="1.5"/>
+    <circle cx="58" cy="42" r="1.5"/>
+    <circle cx="66" cy="42" r="1.5"/>
+    <circle cx="74" cy="42" r="1.5"/>
+  </g>
+
+  <!-- BENT PINS IN CENTER! -->
+  <g stroke="#ef4444" stroke-width="2" stroke-linecap="round">
+    <line x1="48" y1="20" x2="54" y2="28"/>
+    <line x1="52" y1="36" x2="46" y2="28"/>
+    <line x1="46" y1="22" x2="52" y2="24"/>
+    <line x1="54" y1="34" x2="48" y2="38"/>
+  </g>
+  <circle cx="50" cy="30" r="12" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="3,3"/>
+
+  <!-- Warning Label -->
+  <text x="50" y="16" font-family="system-ui, sans-serif" font-size="4" font-weight="900" fill="#f87171" text-anchor="middle">⚠️ BENT PINS!</text>
+  <text x="50" y="48" font-family="system-ui, sans-serif" font-size="3.5" font-weight="bold" fill="#e2e8f0" text-anchor="middle">JUMP OVER!</text>
+</svg>

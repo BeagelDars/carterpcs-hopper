@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 90" width="110" height="90">
+  <defs>
+    <linearGradient id="psuBody" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Shadow -->
+  <rect x="8" y="82" width="94" height="6" rx="3" fill="#0f172a" opacity="0.25"/>
+
+  <!-- Main PSU Box -->
+  <rect x="8" y="8" width="94" height="74" rx="4" fill="url(#psuBody)" stroke="#334155" stroke-width="1.5"/>
+
+  <!-- Fan Grille Area -->
+  <circle cx="42" cy="45" r="28" fill="#020617" stroke="#475569" stroke-width="1.5"/>
+  <!-- Concentric wire rings -->
+  <circle cx="42" cy="45" r="21" fill="none" stroke="#334155" stroke-width="1"/>
+  <circle cx="42" cy="45" r="14" fill="none" stroke="#334155" stroke-width="1"/>
+  <circle cx="42" cy="45" r="7" fill="none" stroke="#334155" stroke-width="1"/>
+  <!-- Center Gold Logo -->
+  <circle cx="42" cy="45" r="5" fill="#eab308"/>
+
+  <!-- Modular Cable Connectors (Right Side) -->
+  <rect x="76" y="16" width="20" height="10" rx="1.5" fill="#020617" stroke="#475569" stroke-width="1"/>
+  <rect x="76" y="30" width="20" height="10" rx="1.5" fill="#020617" stroke="#475569" stroke-width="1"/>
+  <rect x="76" y="44" width="20" height="10" rx="1.5" fill="#020617" stroke="#475569" stroke-width="1"/>
+  <rect x="76" y="58" width="20" height="10" rx="1.5" fill="#020617" stroke="#475569" stroke-width="1"/>
+
+  <!-- 80 Plus Gold Badge -->
+  <rect x="14" y="14" width="26" height="10" rx="2" fill="#ca8a04"/>
+  <text x="27" y="21" font-family="system-ui, sans-serif" font-size="4" font-weight="900" fill="#ffffff" text-anchor="middle">80+ GOLD</text>
+
+  <!-- Wattage Spec -->
+  <text x="55" y="78" font-family="system-ui, sans-serif" font-size="6" font-weight="900" fill="#f8fafc" text-anchor="middle" letter-spacing="0.5">1000W ATX 3.0</text>
+</svg>

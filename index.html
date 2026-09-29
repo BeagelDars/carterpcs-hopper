@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Carter PCs // Silly Hopper</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/png" href="assets/carter_head.png">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Minimalist Header -->
+    <header class="header">
+      <div class="brand">
+        <span class="status-dot"></span>
+        <span class="brand-text">CARTER PCs</span>
+      </div>
+
+      <div class="hud-center">
+        <div class="hud-pill fps-pill">
+          <span class="hud-label">PERF</span>
+          <span class="hud-value" id="fps-display">60 FPS</span>
+        </div>
+        <div class="hud-pill">
+          <span class="hud-label">SCORE</span>
+          <span class="hud-value" id="score-display">0</span>
+        </div>
+        <div class="hud-pill">
+          <span class="hud-label">BEST</span>
+          <span class="hud-value" id="highscore-display">0</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="btn-parts" class="icon-btn" title="Computer Parts Manual">PARTS</button>
+      </div>
+    </header>
+
+    <!-- Canvas Game Viewport -->
+    <main class="canvas-container" id="canvas-container">
+      <canvas id="game-canvas"></canvas>
+
+      <!-- Jump Cooldown Minimalist HUD -->
+      <div class="cooldown-indicator-wrap">
+        <div class="cooldown-pill ready" id="cooldown-pill">
+          <div class="cooldown-ring">
+            <div class="cooldown-ring-fill" id="cooldown-ring-fill"></div>
+          </div>
+          <span class="cooldown-text" id="cooldown-text">JUMP READY</span>
+        </div>
+      </div>
+
+      <!-- Start Overlay -->
+      <div class="overlay" id="start-overlay">
+        <div class="card-modal">
+          <div class="avatar-badge">
+            <img src="assets/carter_head.png" alt="Carter PCs">
+          </div>
+          <h1 class="modal-title">CARTER PCs</h1>
+          <p class="modal-subtitle">Switch lanes and jump over real computer parts in the Carter Kart!</p>
+          
+          <div class="quote-box">
+            "Watch out for bent CPU pins and unseated RAM! Jump has a cooldown, weave through lanes to survive!"
+          </div>
+
+          <button id="btn-start" class="btn-primary">START RUN [SPACE]</button>
+          <button id="btn-view-parts" class="btn-secondary">BROWSE PC PARTS</button>
+        </div>
+      </div>
+
+      <!-- Game Over Overlay -->
+      <div class="overlay hidden" id="gameover-overlay">
+        <div class="card-modal">
+          <div class="avatar-badge">
+            <img src="assets/carter_head.png" alt="Carter PCs">
+          </div>
+          <h2 class="modal-title">BUILD FAILED!</h2>
+          <div class="quote-box" id="gameover-quote">
+            "You bent the CPU pins!"
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-num" id="final-score">0</div>
+              <div class="stat-label">FINAL SCORE</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-num" id="dodged-count">0</div>
+              <div class="stat-label">PARTS DODGED</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-num" id="paste-count">0</div>
+              <div class="stat-label">THERMAL PASTE</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-num" id="best-score">0</div>
+              <div class="stat-label">HIGH SCORE</div>
+            </div>
+          </div>
+
+          <button id="btn-restart" class="btn-primary">PLAY AGAIN [SPACE]</button>
+        </div>
+      </div>
+
+      <!-- Computer Parts Manual Drawer -->
+      <div class="parts-drawer closed" id="parts-drawer">
+        <div class="drawer-header">
+          <div class="drawer-title">COMPUTER PARTS MANUAL</div>
+          <button id="btn-close-parts" class="icon-btn">CLOSE ✕</button>
+        </div>
+        <div class="parts-list" id="parts-list">
+          <!-- Dynamically populated from parts.js -->
+        </div>
+      </div>
+    </main>
+
+    <!-- Bottom Controls Bar (Touch & Keyboard Assist) -->
+    <footer class="controls-bar">
+      <button class="btn-ctrl" id="btn-left">
+        <span>← LEFT</span>
+        <span class="btn-ctrl-key">[A / ←]</span>
+      </button>
+      <button class="btn-ctrl btn-jump" id="btn-jump">
+        <span id="jump-btn-label">JUMP ⇪</span>
+        <span class="btn-ctrl-key" id="jump-btn-key">[SPACE / W]</span>
+      </button>
+      <button class="btn-ctrl" id="btn-right">
+        <span>RIGHT →</span>
+        <span class="btn-ctrl-key">[D / →]</span>
+      </button>
+    </footer>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
